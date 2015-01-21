@@ -13,8 +13,19 @@ type Section struct {
 	Steps       []string
 }
 
-// TODO(gina) look at making this a struct with custom marshall/unmarshall handling
-type Ingredient []string
+type Ingredient struct {
+	Item   string
+	fields []string
+}
+
+func (i *Ingredient) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	err := unmarshal(&i.fields)
+	if err == nil {
+		// TODO(gina) error check that the item exists, etc
+		i.Item = i.fields[0]
+	}
+	return err
+}
 
 func main() {
 	b, err := ioutil.ReadFile("/home/gina/go/src/github.com/ginabythebay/cooks-friend/recipes/whole-wheat-rustic-italian-bread.yml")
@@ -28,4 +39,15 @@ func main() {
 	}
 
 	log.Printf("Read recipe: %+v", recipe)
+
+	for _, s := range recipe {
+		for _, i := range s.Ingredients {
+			for idx, fld := range i.fields {
+				if idx != 0 {
+					log.Print(fld)
+					Parse(fld)
+				}
+			}
+		}
+	}
 }

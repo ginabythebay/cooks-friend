@@ -3,11 +3,24 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/big"
+	"reflect"
+	"regexp"
+	"strings"
 )
-import "regexp"
-import "reflect"
 
 var (
+	// we match <magnitude> <unit>
+	// where <magnitude> can look like:
+	//   2
+	//   2.5
+	//   2 1/2
+	// and <unit> can look like
+	//   oz
+	//   cup
+	//   cups
+	//   tsp
+	//   etc...
 	re = regexp.MustCompile(`^\s*(\d+\s+\d+/\d+|\d+|\d+\.\d+|\d+/\d+)\s+([a-zA-Z]*)\s*$`)
 )
 
@@ -38,6 +51,14 @@ func (v Volume) Add(o Measurement) (result Measurement, err error) {
 	}
 }
 
+func (v Volume) Mul(r *big.Rat) (Measurement, error) {
+	if i, err := mul(int64(v), r); err != nil {
+		return Teaspoon, err
+	} else {
+		return Volume(i), nil
+	}
+}
+
 type Weight int64
 
 const (
@@ -57,17 +78,57 @@ func (v Weight) Add(o Measurement) (result Measurement, err error) {
 	}
 }
 
+func (v Weight) Mul(r *big.Rat) (Measurement, error) {
+	if i, err := mul(int64(v), r); err != nil {
+		return Ounce, err
+	} else {
+		return Weight(i), nil
+	}
+}
+
 type Measurement interface {
 	Add(other Measurement) (result Measurement, err error)
+	Mul(r *big.Rat) (Measurement, error)
+}
+
+func mul(i int64, r *big.Rat) (int64, error) {
+	result := big.NewRat(i, 1)
+	result.Mul(result, r)
+	if !result.IsInt() {
+		return 0, fmt.Errorf("Error multiplying %v by %v.  We ended up with non-integral value %v", i, r, result)
+	}
+	return result.Num().Int64(), nil
+}
+
+// Can parse things like "1/4", ".5", "2", "2 1/2"
+func parseMagnitude(s string) (*big.Rat, error) {
+	tokens := strings.Split(s, " ")
+	accum := new(big.Rat)
+	r := new(big.Rat)
+	for _, t := range tokens {
+		if _, ok := r.SetString(t); !ok {
+			return nil, fmt.Errorf("Error parsing %v.  Token %v could not be parsed by big.Rat")
+		}
+		accum.Add(accum, r)
+	}
+	return accum, nil
 }
 
 func Parse(s string) (m Measurement, err error) {
 	if matches := re.FindStringSubmatch(s); matches != nil {
 		if len(matches) == 3 {
 			magnitude := matches[1]
-			units := matches[2]
-			log.Printf("%#v: %#v: %#v", s, magnitude, units)
-			return nil, nil
+			unit := matches[2]
+			log.Printf("%#v: %#v: %#v", s, magnitude, unit)
+			if unit == "tsp" {
+				if mag, err := parseMagnitude(magnitude); err != nil {
+					return nil, err
+				} else {
+					return Teaspoon.Mul(mag)
+				}
+			} else {
+				return nil, fmt.Errorf("TODO(gina) implement more)", s)
+			}
 		} else {
 			return nil, fmt.Errorf("Unable to parse [%v] as measurment.  Matches was %#v", s, matches)
 		}

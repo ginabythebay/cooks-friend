@@ -12,17 +12,6 @@ func TestParseMagnitude(t *testing.T) {
 	verifyParseMagnitude(t, "3", big.NewRat(3, 1))
 }
 
-func verifyParseMagnitude(t *testing.T, s string, expected *big.Rat) {
-	if value, err := parseMagnitude(s); err != nil {
-		t.Fatal(err)
-	} else {
-		if value.Num().Int64() != expected.Num().Int64() ||
-			value.Denom().Int64() != expected.Denom().Int64() {
-			t.Errorf("Error parsing magnitude %v: expected %v but got %v", s, expected, value)
-		}
-	}
-}
-
 func TestMul(t *testing.T) {
 	if v, err := mul(20, big.NewRat(3, 4)); err != nil {
 		t.Fatal(err)
@@ -39,6 +28,18 @@ func TestMul(t *testing.T) {
 func TestParse(t *testing.T) {
 	verifyParse(t, "1/2 tsp", HalfTeaspoon)
 	verifyParse(t, "1 1/2 tsp", Volume(Teaspoon+HalfTeaspoon))
+	verifyParse(t, "3/4 gallons", Volume(Quart*3))
+}
+
+func verifyParseMagnitude(t *testing.T, s string, expected *big.Rat) {
+	if value, err := parseMagnitude(s); err != nil {
+		t.Fatal(err)
+	} else {
+		if value.Num().Int64() != expected.Num().Int64() ||
+			value.Denom().Int64() != expected.Denom().Int64() {
+			t.Errorf("Error parsing magnitude %v: expected %v but got %v", s, expected, value)
+		}
+	}
 }
 
 func verifyParse(t *testing.T, s string, expected Measurement) {

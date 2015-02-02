@@ -223,6 +223,52 @@ const (
 	Pound = Ounce * 16
 )
 
+var (
+	weightInfo = map[Measurement]*unitInfo{
+		Milligram: &unitInfo{
+			nil,
+			Metric,
+			"mg",
+			[]string{"mg", "milligram", "milligrams", "milligramme", "milligrammes"},
+			0,
+			MultiplesOK,
+		},
+		Gram: &unitInfo{
+			nil,
+			Metric,
+			"g",
+			[]string{"g", "gram", "grams", "gramme", "grammes"},
+			3,
+			MultiplesOK,
+		},
+		Kilogram: &unitInfo{
+			nil,
+			Metric,
+			"kg",
+			[]string{"kg", "kilogram", "kilograms", "kilogramme", "kilogrammes"},
+			3,
+			MultiplesOK,
+		},
+
+		Ounce: &unitInfo{
+			nil,
+			Imperial,
+			"oz",
+			[]string{"oz", "ounce", "ounces"},
+			1,
+			MultiplesOK,
+		},
+		Pound: &unitInfo{
+			nil,
+			Imperial,
+			"lb",
+			[]string{"lb", "#", "pound", "pounds"},
+			0,
+			MultiplesOK,
+		},
+	}
+)
+
 func (v Weight) Add(o Measurement) (result Measurement, err error) {
 	if other, ok := o.(Weight); ok {
 		return v + other, nil
@@ -291,8 +337,7 @@ func Parse(s string) (m Measurement, err error) {
 
 }
 
-// TODO(gina) add weight here when we have it
-var allMeasurementInfo = []map[Measurement]*unitInfo{volumeInfo}
+var allMeasurementInfo = []map[Measurement]*unitInfo{volumeInfo, weightInfo}
 
 var measurementLookup = make(map[string]*unitInfo)
 

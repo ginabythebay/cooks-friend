@@ -29,6 +29,8 @@ func TestParse(t *testing.T) {
 	verifyParse(t, "1/2 tsp", HalfTeaspoon)
 	verifyParse(t, "1 1/2 tsp", Volume(Teaspoon+HalfTeaspoon))
 	verifyParse(t, "3/4 gallons", Volume(Quart*3))
+	verifyParse(t, "16 oz", Pound)
+	verifyParse(t, "1/2 lb", Weight(Ounce*8))
 }
 
 func verifyParseMagnitude(t *testing.T, s string, expected *big.Rat) {

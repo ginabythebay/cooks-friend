@@ -55,6 +55,7 @@ const (
 	FluidOunce      = Tablespoon * 2
 	QuarterCup      = FluidOunce * 2
 	HalfCup         = FluidOunce * 4
+	ThreeQuarterCup = FluidOunce * 6
 	Cup             = FluidOunce * 8
 	Pint            = Cup * 2
 	Quart           = Cup * 4
@@ -161,6 +162,14 @@ var (
 			0,
 			SingleOnly,
 		},
+		ThreeQuarterCup: &unitInfo{
+			nil,
+			Imperial,
+			"3/4 cup",
+			[]string{},
+			0,
+			SingleOnly,
+		},
 		Cup: &unitInfo{
 			nil,
 			Imperial,
@@ -195,6 +204,10 @@ var (
 		},
 	}
 )
+
+func (v Volume) String() string {
+	return "TODO(gina) implement this"
+}
 
 func (v Volume) Add(o Measurement) (result Measurement, err error) {
 	if other, ok := o.(Volume); ok {
@@ -269,16 +282,20 @@ var (
 	}
 )
 
-func (v Weight) Add(o Measurement) (result Measurement, err error) {
+func (w Weight) String() string {
+	return "TODO(gina) implement this"
+}
+
+func (w Weight) Add(o Measurement) (result Measurement, err error) {
 	if other, ok := o.(Weight); ok {
-		return v + other, nil
+		return w + other, nil
 	} else {
-		return v, fmt.Errorf("Weight incompatible with %v", reflect.ValueOf(o).Type())
+		return w, fmt.Errorf("Weight incompatible with %v", reflect.ValueOf(o).Type())
 	}
 }
 
-func (v Weight) Mul(r *big.Rat) (Measurement, error) {
-	if i, err := mul(int64(v), r); err != nil {
+func (w Weight) Mul(r *big.Rat) (Measurement, error) {
+	if i, err := mul(int64(w), r); err != nil {
 		return Ounce, err
 	} else {
 		return Weight(i), nil
@@ -286,6 +303,7 @@ func (v Weight) Mul(r *big.Rat) (Measurement, error) {
 }
 
 type Measurement interface {
+	fmt.Stringer
 	Add(other Measurement) (result Measurement, err error)
 	Mul(r *big.Rat) (Measurement, error)
 }

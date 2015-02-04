@@ -33,6 +33,26 @@ func TestParse(t *testing.T) {
 	verifyParse(t, "1/2 lb", Weight(Ounce*8))
 }
 
+func TestString(t *testing.T) {
+	verifyString(t, "1/8 tsp", EighthTeaspoon)
+	verifyString(t, "1 oz", Ounce)
+	verifyString(t, "2 T", Volume(2*Tablespoon))
+	verifyString(t, "1 cup and 1 tsp", Volume(Teaspoon+Cup))
+	verifyString(t, "3 ml", Volume(Milliliter*3))
+	verifyString(t, ".451 l", Volume(Milliliter*451))
+	verifyString(t, "3/4 c", ThreeQuarterCup)
+	verifyString(t, "gal and 1 c", Volume(Gallon+Cup))
+	verifyString(t, ".5 oz", Weight(Ounce/2))
+	verifyString(t, "3 lb and 8 oz", Weight(Ounce*16*3+Ounce*8))
+}
+
+func verifyString(t *testing.T, e string, m Measurement) {
+	s := m.String()
+	if s != e {
+		t.Errorf("Expected %v but got %v when converting %#v", e, s, m)
+	}
+}
+
 func verifyParseMagnitude(t *testing.T, s string, expected *big.Rat) {
 	if value, err := parseMagnitude(s); err != nil {
 		t.Fatal(err)

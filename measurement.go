@@ -383,6 +383,22 @@ func Parse(s string) (m Measurement, err error) {
 
 func Output(m Measurement, units byMeasurement) string {
 	remainder := m.Int64()
+
+	// units are already ordered by size, biggest first.  We loop
+	// through them, looking for ones to apply, building up a slice of
+	// tokens, which will be joined at the end.
+
+	// Here are the cases applied on each iteration through the loop:
+	//
+	//  If remainder equals the unit size and the unit does not
+	//  support multiples: just output the unit and finish the loop
+	//
+	//  If (unit < remainder and unit divides cleanly into remainder),
+	//  or unit does not support decimals: Add division token, reduce
+	//  remainder to remainder % ui
+	//
+	//  If (unit < remainder and unit supports decimals), or unit
+	//  supports fractions: output fraction, zero out remainder
 	tokens := make([]string, 0)
 	for _, u := range units {
 		ui := u.measurement.Int64()

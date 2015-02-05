@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -31,13 +32,23 @@ const (
 	Imperial
 )
 
-type OutputType int8
+func (sys System) String() string {
+	switch sys {
+	case Metric:
+		return "Metric system"
+	case Imperial:
+		return "Imperial system"
+	}
+	return fmt.Sprintf("Unknown system %v", sys)
+}
 
+type OutputType byte
+
+// semi-overlapping flags
 const (
-	NeverOutput = iota
-	SingleOnly
-	MultiplesOK
-	MultiplesOKAppendS
+	SuppressOutput OutputType = 1 << iota // rest ignored if this is set
+	MultiplesOk                           // If set, we can have more than one of this unit
+	FractionsOk                           // If set, we can have less than one of this unit
 )
 
 type Volume int64
@@ -67,9 +78,15 @@ type unitInfo struct {
 	system        System
 	out           string
 	in            []string
-	decimalPlaces int8
+	decimalPlaces int
 	outputType    OutputType
 }
+
+type byMeasurement []*unitInfo
+
+func (a byMeasurement) Len() int           { return len(a) }
+func (a byMeasurement) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byMeasurement) Less(i, j int) bool { return a[i].measurement.Int64() < a[j].measurement.Int64() }
 
 var (
 	volumeInfo = map[Measurement]*unitInfo{
@@ -79,7 +96,7 @@ var (
 			"ml",
 			[]string{"ml", "milliliter", "milliliters", "millilitre", "millilitres", "mL"},
 			0,
-			MultiplesOK,
+			MultiplesOk,
 		},
 		Deciliter: &unitInfo{
 			nil,
@@ -87,7 +104,7 @@ var (
 			"",
 			[]string{"dl", "deciliter", "deciliters", "decilitre", "decilitres", "dL"},
 			0,
-			NeverOutput,
+			SuppressOutput,
 		},
 		Liter: &unitInfo{
 			nil,
@@ -95,7 +112,7 @@ var (
 			"l",
 			[]string{"l", "liter", "liters", "litre", "litres", "L"},
 			3,
-			MultiplesOK,
+			MultiplesOk,
 		},
 
 		EighthTeaspoon: &unitInfo{
@@ -104,7 +121,7 @@ var (
 			"1/8 tsp",
 			[]string{},
 			0,
-			SingleOnly,
+			0,
 		},
 		QuarterTeaspoon: &unitInfo{
 			nil,
@@ -112,7 +129,7 @@ var (
 			"1/4 tsp",
 			[]string{},
 			0,
-			SingleOnly,
+			0,
 		},
 		HalfTeaspoon: &unitInfo{
 			nil,
@@ -120,15 +137,15 @@ var (
 			"1/2 tsp",
 			[]string{},
 			0,
-			SingleOnly,
+			0,
 		},
 		Teaspoon: &unitInfo{
 			nil,
 			Imperial,
-			"t",
+			"tsp",
 			[]string{"t", "teaspoon", "teaspoons", "tsp.", "tsp"},
 			0,
-			SingleOnly,
+			MultiplesOk,
 		},
 		Tablespoon: &unitInfo{
 			nil,
@@ -136,7 +153,7 @@ var (
 			"T",
 			[]string{"T", "tablespoon", "tablespoons", "tbl.", "tbl", "tbs.", "tbsp."},
 			0,
-			SingleOnly,
+			MultiplesOk,
 		},
 		FluidOunce: &unitInfo{
 			nil,
@@ -144,31 +161,31 @@ var (
 			"",
 			[]string{"fluid ounce", "fluid ounces", "fl oz"},
 			0,
-			NeverOutput,
+			SuppressOutput,
 		},
 		QuarterCup: &unitInfo{
 			nil,
 			Imperial,
-			"1/4 cup",
+			"1/4 c",
 			[]string{},
 			0,
-			SingleOnly,
+			0,
 		},
 		HalfCup: &unitInfo{
 			nil,
 			Imperial,
-			"1/2 cup",
+			"1/2 c",
 			[]string{},
 			0,
-			SingleOnly,
+			0,
 		},
 		ThreeQuarterCup: &unitInfo{
 			nil,
 			Imperial,
-			"3/4 cup",
+			"3/4 c",
 			[]string{},
 			0,
-			SingleOnly,
+			0,
 		},
 		Cup: &unitInfo{
 			nil,
@@ -176,7 +193,7 @@ var (
 			"c",
 			[]string{"c", "cup", "cups"},
 			0,
-			MultiplesOK,
+			MultiplesOk,
 		},
 		Pint: &unitInfo{
 			nil,
@@ -184,7 +201,7 @@ var (
 			"",
 			[]string{"p", "pt", "pint", "pints", "fl pt"},
 			0,
-			NeverOutput,
+			SuppressOutput,
 		},
 		Quart: &unitInfo{
 			nil,
@@ -192,7 +209,7 @@ var (
 			"qt",
 			[]string{"q", "quart", "quarts", "qt", "fl qt"},
 			0,
-			MultiplesOK,
+			MultiplesOk,
 		},
 		Gallon: &unitInfo{
 			nil,
@@ -200,13 +217,13 @@ var (
 			"gal",
 			[]string{"gal", "gallon", "gallons", "g"},
 			0,
-			MultiplesOK,
+			MultiplesOk,
 		},
 	}
 )
 
-func (v Volume) String() string {
-	return "TODO(gina) implement this"
+func (v Volume) Output(sys System) string {
+	return Output(v, volumeOutput[sys])
 }
 
 func (v Volume) Add(o Measurement) (result Measurement, err error) {
@@ -223,6 +240,10 @@ func (v Volume) Mul(r *big.Rat) (Measurement, error) {
 	} else {
 		return Volume(i), nil
 	}
+}
+
+func (v Volume) Int64() int64 {
+	return int64(v)
 }
 
 type Weight int64
@@ -244,7 +265,7 @@ var (
 			"mg",
 			[]string{"mg", "milligram", "milligrams", "milligramme", "milligrammes"},
 			0,
-			MultiplesOK,
+			MultiplesOk,
 		},
 		Gram: &unitInfo{
 			nil,
@@ -252,7 +273,7 @@ var (
 			"g",
 			[]string{"g", "gram", "grams", "gramme", "grammes"},
 			3,
-			MultiplesOK,
+			MultiplesOk,
 		},
 		Kilogram: &unitInfo{
 			nil,
@@ -260,7 +281,7 @@ var (
 			"kg",
 			[]string{"kg", "kilogram", "kilograms", "kilogramme", "kilogrammes"},
 			3,
-			MultiplesOK,
+			MultiplesOk,
 		},
 
 		Ounce: &unitInfo{
@@ -269,7 +290,7 @@ var (
 			"oz",
 			[]string{"oz", "ounce", "ounces"},
 			1,
-			MultiplesOK,
+			MultiplesOk | FractionsOk,
 		},
 		Pound: &unitInfo{
 			nil,
@@ -277,13 +298,13 @@ var (
 			"lb",
 			[]string{"lb", "#", "pound", "pounds"},
 			0,
-			MultiplesOK,
+			MultiplesOk,
 		},
 	}
 )
 
-func (w Weight) String() string {
-	return "TODO(gina) implement this"
+func (w Weight) Output(sys System) string {
+	return Output(w, weightOutput[sys])
 }
 
 func (w Weight) Add(o Measurement) (result Measurement, err error) {
@@ -302,10 +323,15 @@ func (w Weight) Mul(r *big.Rat) (Measurement, error) {
 	}
 }
 
+func (w Weight) Int64() int64 {
+	return int64(w)
+}
+
 type Measurement interface {
-	fmt.Stringer
 	Add(other Measurement) (result Measurement, err error)
 	Mul(r *big.Rat) (Measurement, error)
+	Output(sys System) string
+	Int64() int64
 }
 
 func mul(i int64, r *big.Rat) (int64, error) {
@@ -355,9 +381,70 @@ func Parse(s string) (m Measurement, err error) {
 
 }
 
+func Output(m Measurement, units byMeasurement) string {
+	remainder := m.Int64()
+	tokens := make([]string, 0)
+	for _, u := range units {
+		ui := u.measurement.Int64()
+		if remainder >= ui {
+			if remainder%ui == 0 {
+				div := remainder / ui
+				remainder = 0
+				if div == 1 {
+					if u.outputType&MultiplesOk == 0 {
+						// if multiples not supported, the value is encoded in unitInfo
+						tokens = append(tokens, u.out)
+					} else {
+						tokens = append(tokens, fmt.Sprintf("%v %s", div, u.out))
+					}
+				} else { // div != 1
+					if u.outputType&MultiplesOk != 0 {
+						tokens = append(tokens, fmt.Sprintf("%v %s", div, u.out))
+					} else { // should not happen
+						return fmt.Sprintf("Error: unable to represent measurement %#v", m)
+					}
+				}
+			} else { // fractional value over 1
+				return "TODO(gina) handle partials"
+			}
+		} else { // remainder < ui
+			if u.outputType&FractionsOk != 0 {
+				f := float64(remainder) / float64(ui)
+				tokens = append(tokens, fmt.Sprintf("%.*f %s", u.decimalPlaces, f, u.out))
+				remainder = 0
+			} else { // look for a smaller unit we can handle
+				continue
+			}
+		}
+		if remainder == 0 {
+			break
+		}
+	}
+	if len(tokens) != 0 {
+		return strings.Join(tokens, ", ")
+	} else {
+		return "TODO(gina) what to do here?"
+	}
+}
+
 var allMeasurementInfo = []map[Measurement]*unitInfo{volumeInfo, weightInfo}
 
 var measurementLookup = make(map[string]*unitInfo)
+
+var volumeOutput = make(map[System]byMeasurement)
+var weightOutput = make(map[System]byMeasurement)
+
+func extractOutputs(sys System, m map[Measurement]*unitInfo) byMeasurement {
+	s := make([]*unitInfo, 0, len(m))
+	for _, u := range m {
+		if u.system == sys && u.outputType&SuppressOutput == 0 {
+			s = append(s, u)
+		}
+	}
+	result := byMeasurement(s)
+	sort.Sort(sort.Reverse(result))
+	return result
+}
 
 func init() {
 	for _, m := range allMeasurementInfo {
@@ -369,6 +456,12 @@ func init() {
 			}
 		}
 	}
+
+	volumeOutput[Metric] = extractOutputs(Metric, volumeInfo)
+	volumeOutput[Imperial] = extractOutputs(Imperial, volumeInfo)
+
+	weightOutput[Metric] = extractOutputs(Metric, weightInfo)
+	weightOutput[Imperial] = extractOutputs(Imperial, weightInfo)
 }
 
 // 	}

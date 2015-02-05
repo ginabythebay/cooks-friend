@@ -405,7 +405,15 @@ func Output(m Measurement, units byMeasurement) string {
 					}
 				}
 			} else { // fractional value over 1
-				return "TODO(gina) handle partials"
+				if u.decimalPlaces == 0 {
+					div := remainder / ui
+					tokens = append(tokens, fmt.Sprintf("%v %s", div, u.out))
+					remainder = remainder % ui
+				} else {
+					f := float64(remainder) / float64(ui)
+					tokens = append(tokens, fmt.Sprintf("%.*f %s", u.decimalPlaces, f, u.out))
+					remainder = 0
+				}
 			}
 		} else { // remainder < ui
 			if u.outputType&FractionsOk != 0 {

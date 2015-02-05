@@ -46,14 +46,14 @@ func TestOutput(t *testing.T) {
 		&testCase{"5 ml", Metric, Teaspoon},
 		&testCase{"1 oz", Imperial, Ounce},
 		&testCase{"2 T", Imperial, Volume(2 * Tablespoon)},
-		&testCase{"1 cup, 1 tsp", Imperial, Volume(Teaspoon + Cup)},
+		&testCase{"1 c, 1 tsp", Imperial, Volume(Teaspoon + Cup)},
 		&testCase{"3 ml", Metric, Volume(Milliliter * 3)},
 		&testCase{"451 ml", Metric, Volume(Milliliter * 451)},
 		&testCase{"1.451 l", Metric, Volume(Milliliter * 1451)},
 		&testCase{"3/4 c", Imperial, ThreeQuarterCup},
-		&testCase{"gal, 1 c", Imperial, Volume(Gallon + Cup)},
+		&testCase{"1 gal, 1 c", Imperial, Volume(Gallon + Cup)},
 		&testCase{"0.5 oz", Imperial, Weight(Ounce / 2)},
-		&testCase{"3 lb,y 8 oz", Imperial, Weight(Ounce*16*3 + Ounce*8)},
+		&testCase{"3 lb, 8 oz", Imperial, Weight(Ounce*16*3 + Ounce*8)},
 	}
 	for i, c := range cases {
 		s := c.m.Output(c.sys)

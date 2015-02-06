@@ -387,63 +387,32 @@ func Output(m Measurement, units byMeasurement) string {
 	// units are already ordered by size, biggest first.  We loop
 	// through them, looking for ones to apply, building up a slice of
 	// tokens, which will be joined at the end.
-
-	// Here are the cases applied on each iteration through the loop:
-	//
-	//  If remainder equals the unit size and the unit does not
-	//  support multiples: just output the unit and finish the loop
-	//
-	//  If (unit < remainder and unit divides cleanly into remainder),
-	//  or unit does not support decimals: Add division token, reduce
-	//  remainder to remainder % ui
-	//
-	//  If (unit < remainder and unit supports decimals), or unit
-	//  supports fractions: output fraction, zero out remainder
 	tokens := make([]string, 0)
 	for _, u := range units {
 		ui := u.measurement.Int64()
-		if remainder >= ui {
-			if remainder%ui == 0 {
-				div := remainder / ui
-				remainder = 0
-				if div == 1 {
-					if u.outputType&MultiplesOk == 0 {
-						// if multiples not supported, the value is encoded in unitInfo
-						tokens = append(tokens, u.out)
-					} else {
-						tokens = append(tokens, fmt.Sprintf("%v %s", div, u.out))
-					}
-				} else { // div != 1
-					if u.outputType&MultiplesOk != 0 {
-						tokens = append(tokens, fmt.Sprintf("%v %s", div, u.out))
-					} else { // should not happen
-						return fmt.Sprintf("Error: unable to represent measurement %#v", m)
-					}
-				}
-			} else { // fractional value over 1
-				if u.decimalPlaces == 0 {
-					div := remainder / ui
-					tokens = append(tokens, fmt.Sprintf("%v %s", div, u.out))
-					remainder = remainder % ui
-				} else {
-					f := float64(remainder) / float64(ui)
-					tokens = append(tokens, fmt.Sprintf("%.*f %s", u.decimalPlaces, f, u.out))
-					remainder = 0
-				}
-			}
-		} else { // remainder < ui
-			if u.outputType&FractionsOk != 0 {
-				f := float64(remainder) / float64(ui)
-				tokens = append(tokens, fmt.Sprintf("%.*f %s", u.decimalPlaces, f, u.out))
-				remainder = 0
-			} else { // look for a smaller unit we can handle
-				continue
-			}
+		div := remainder / ui
+		mod := remainder % ui
+		multiplesOK := u.outputType&MultiplesOk != 0
+		fractionsOk := u.outputType&FractionsOk != 0
+		switch {
+		case remainder == ui && !multiplesOK:
+			tokens = append(tokens, u.out)
+			remainder = 0
+		case ui <= remainder && multiplesOK && (mod == 0 || u.decimalPlaces == 0):
+			tokens = append(tokens, fmt.Sprintf("%v %s", div, u.out))
+			remainder -= div * ui
+		case (ui < remainder && u.decimalPlaces != 0) || fractionsOk:
+			f := float64(remainder) / float64(ui)
+			tokens = append(tokens, fmt.Sprintf("%.*f %s", u.decimalPlaces, f, u.out))
+			remainder = 0
+		default:
+			continue
 		}
 		if remainder == 0 {
 			break
 		}
 	}
+
 	if len(tokens) != 0 {
 		return strings.Join(tokens, ", ")
 	} else {

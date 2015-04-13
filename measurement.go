@@ -249,7 +249,7 @@ func (v Volume) Int64() int64 {
 type Weight int64
 
 const (
-	Milligram Weight = 8
+	Milligram Weight = 8 * 10
 	Gram             = Milligram * 1000
 	Kilogram         = Gram * 1000
 

@@ -68,6 +68,8 @@ const (
 	HalfCup         = FluidOunce * 4
 	ThreeQuarterCup = FluidOunce * 6
 	Cup             = FluidOunce * 8
+	OneThirdCup     = Cup / 3
+	TwoThirdsCups   = Cup * 2 / 3
 	Pint            = Cup * 2
 	Quart           = Cup * 4
 	Gallon          = Quart * 4
@@ -183,6 +185,22 @@ var (
 			nil,
 			Imperial,
 			"3/4 c",
+			[]string{},
+			0,
+			0,
+		},
+		OneThirdCup: &unitInfo{
+			nil,
+			Imperial,
+			"1/3 c",
+			[]string{},
+			0,
+			0,
+		},
+		TwoThirdsCups: &unitInfo{
+			nil,
+			Imperial,
+			"2/3 c",
 			[]string{},
 			0,
 			0,

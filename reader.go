@@ -13,15 +13,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var recipe []Section
+	var recipe Recipe
 	err = yaml.Unmarshal(b, &recipe)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Read recipe: %+v", recipe)
+	log.Printf("Read recipe: %+v", recipe.Title)
 
-	for _, s := range recipe {
+	for _, s := range recipe.Sections {
 		for _, i := range s.Ingredients {
 			tokens := make([]string, len(i.Measurements))
 			for idx, m := range i.Measurements {

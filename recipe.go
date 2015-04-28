@@ -1,5 +1,10 @@
 package main
 
+type Recipe struct {
+	Title    string
+	Sections []Section
+}
+
 type Section struct {
 	Name        string
 	Ingredients []Ingredient

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"reflect"
 	"regexp"
@@ -380,7 +379,6 @@ func Parse(s string) (m Measurement, err error) {
 		if len(matches) == 3 {
 			magnitude := matches[1]
 			unit := matches[2]
-			log.Printf("%#v: %#v: %#v", s, magnitude, unit)
 			if info, ok := measurementLookup[unit]; ok {
 				if mag, err := parseMagnitude(magnitude); err != nil {
 					return nil, err

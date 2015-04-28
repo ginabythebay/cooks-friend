@@ -47,7 +47,7 @@ func (i *Ingredient) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func main() {
-	b, err := ioutil.ReadFile("/home/gina/go/src/github.com/ginabythebay/cooks-friend/recipes/whole-wheat-rustic-italian-bread.yml")
+	b, err := ioutil.ReadFile("/home/gina/go/src/github.com/ginabythebay/cooks-friend/testdata/whole-wheat-rustic-italian-bread.yml")
 	if err != nil {
 		log.Fatal(err)
 	}

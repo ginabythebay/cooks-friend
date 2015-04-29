@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Recipe struct {
 	Title    string
 	Sections []Section
@@ -21,6 +23,30 @@ type Ingredient struct {
 	Item string
 	// what do we want here?  Map from type to Measurement?  called-out volume and weight?
 	Measurements []Measurement
+}
+
+func (i *Ingredient) Merge(other *Ingredient) error {
+	if i.Item != other.Item {
+		return fmt.Errorf("Cannot add ingredient %q to %q)", i.Item, other.Item)
+	}
+	if len(i.Measurements) != len(other.Measurements) {
+		return fmt.Errorf("Cannot merge ingredients.  %q has %d measurements while %q has %d measurements.",
+			i.Item, len(i.Measurements), other.Item, len(other.Measurements))
+	}
+	// we add up the new measurements first before assigning them so
+	// we don't modify i if there are any errors
+	temp := make([]Measurement, 0, len(i.Measurements))
+	for index, m := range i.Measurements {
+		m, err := m.Add(other.Measurements[index])
+		if err != nil {
+			return err
+		}
+		temp = append(temp, m)
+	}
+	for index, m := range temp {
+		i.Measurements[index] = m
+	}
+	return nil
 }
 
 func (i *Ingredient) UnmarshalYAML(unmarshal func(interface{}) error) error {

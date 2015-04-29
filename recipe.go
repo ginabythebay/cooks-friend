@@ -7,6 +7,31 @@ type Recipe struct {
 	Sections []Section
 }
 
+func (r *Recipe) ShoppingList() ([]Ingredient, error) {
+	capacity := 0
+	for _, s := range r.Sections {
+		capacity += len(s.Ingredients)
+	}
+
+	// this will have more capacity than needed if the same ingredient appears twice
+	result := make([]Ingredient, 0, capacity)
+	have := make(map[string]int) // from name to location
+	for _, s := range r.Sections {
+		for _, i := range s.Ingredients {
+			offset, found := have[i.Item]
+			if found {
+				if err := result[offset].Merge(&i); err != nil {
+					return nil, err
+				}
+			} else {
+				result = append(result, i)
+				have[i.Item] = len(result) - 1
+			}
+		}
+	}
+	return result, nil
+}
+
 type Section struct {
 	Name        string
 	Ingredients []Ingredient

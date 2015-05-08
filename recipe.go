@@ -20,7 +20,7 @@ func (r *Recipe) ShoppingList() ([]Ingredient, error) {
 		for _, i := range s.Ingredients {
 			offset, found := have[i.Item]
 			if found {
-				if err := result[offset].Merge(&i); err != nil {
+				if err := result[offset].Combine(&i); err != nil {
 					return nil, err
 				}
 			} else {
@@ -50,12 +50,12 @@ type Ingredient struct {
 	Measurements []Measurement
 }
 
-func (i *Ingredient) Merge(other *Ingredient) error {
+func (i *Ingredient) Combine(other *Ingredient) error {
 	if i.Item != other.Item {
 		return fmt.Errorf("Cannot add ingredient %q to %q)", i.Item, other.Item)
 	}
 	if len(i.Measurements) != len(other.Measurements) {
-		return fmt.Errorf("Cannot merge ingredients.  %q has %d measurements while %q has %d measurements.",
+		return fmt.Errorf("Cannot combine ingredients.  %q has %d measurements while %q has %d measurements.",
 			i.Item, len(i.Measurements), other.Item, len(other.Measurements))
 	}
 	// we add up the new measurements first before assigning them so

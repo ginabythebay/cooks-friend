@@ -21,7 +21,11 @@ func (r *Recipe) ShoppingList() ([]Ingredient, error) {
 			offset, found := have[i.Item]
 			if found {
 				if err := result[offset].Combine(&i); err != nil {
-					return nil, err
+					// If we couldn't combine the ingredients for some
+					// reason, (e.g. one is measured by weight and
+					// another by volume), just treat them as separate
+					// line items.
+					result = append(result, i)
 				}
 			} else {
 				result = append(result, i)

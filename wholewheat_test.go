@@ -10,17 +10,21 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func readRecipe() *Recipe {
-	b, err := ioutil.ReadFile("testdata/whole-wheat-rustic-italian-bread.yml")
-	if err != nil {
-		log.Fatal(err)
-	}
+func readRecipe(b []byte) *Recipe {
 	var recipe Recipe
-	err = yaml.Unmarshal(b, &recipe)
+	err := yaml.Unmarshal(b, &recipe)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return &recipe
+}
+
+func readWholeWheatRecipe() *Recipe {
+	b, err := ioutil.ReadFile("testdata/whole-wheat-rustic-italian-bread.yml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return readRecipe(b)
 }
 
 func measure(t *testing.T, m Measurement, count int64, frac *big.Rat) Measurement {
@@ -36,7 +40,7 @@ func measure(t *testing.T, m Measurement, count int64, frac *big.Rat) Measuremen
 }
 
 func TestParseFile(t *testing.T) {
-	readRecipe()
+	readWholeWheatRecipe()
 }
 
 func TestShoppingList(t *testing.T) {
@@ -55,7 +59,7 @@ func TestShoppingList(t *testing.T) {
 		{"table salt", []Measurement{
 			measure(t, Teaspoon, 2, nil)}},
 	}
-	recipe := readRecipe()
+	recipe := readWholeWheatRecipe()
 	found, err := recipe.ShoppingList()
 	if err != nil {
 		t.Fatal(err)
@@ -64,3 +68,50 @@ func TestShoppingList(t *testing.T) {
 		t.Errorf("got %v; want %v", found, expected)
 	}
 }
+
+func verifyShoppingListCombine(t *testing.T, b []byte, expected []Ingredient) {
+	recipe := readRecipe(b)
+	found, err := recipe.ShoppingList()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(expected, found) {
+		t.Errorf("got %v; want %v", found, expected)
+	}
+}
+
+func TestShoppingListCombine(t *testing.T) {
+	verifyShoppingListCombine(t, []byte(combinable),
+		[]Ingredient{
+			{"bread flour", []Measurement{
+				measure(t, Ounce, 20, big.NewRat(1, 2)),
+				measure(t, Cup, 3, big.NewRat(3, 4))}}})
+	verifyShoppingListCombine(t, []byte(notCombinable),
+		[]Ingredient{
+			{"bread flour", []Measurement{
+				measure(t, Ounce, 11, nil)}},
+			{"bread flour", []Measurement{
+				measure(t, Cup, 1, big.NewRat(3, 4))}}})
+}
+
+const combinable = `
+sections:
+-
+ name: biga
+ ingredients:
+   - [ bread flour, 11 oz, 2 cups]
+-
+  ingredients:
+    - [ bread flour, 9 1/2 oz, 1 3/4 cups]
+`
+
+const notCombinable = `
+sections:
+-
+ name: biga
+ ingredients:
+   - [ bread flour, 11 oz]
+-
+  ingredients:
+    - [ bread flour, 1 3/4 cups]
+`

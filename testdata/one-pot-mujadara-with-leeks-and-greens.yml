@@ -1,0 +1,48 @@
+---
+
+title: One Pot Mujadara With Leeks and Greens
+
+sections:
+-
+  name: soak lentils
+  ingredients:
+    [ green or brown lentils, 1 cup]
+  steps:
+    - Put lentils in large bowl and cover with warm tap water, by one inch.  Let soak.
+-
+  name: wash and trim leeks
+  ingredients:
+    - [leeks, 2] # note no units
+  steps:
+    - Trim away ends and all but white and light green parts.
+    - Halve them lengthwise.  Rinse under warm water, getting rid of any grit.
+    - Slice thinly crosswise
+-
+  name: combine spices
+  ingredients:
+    - [ ground cumin, 1 1/2 tsp]
+    - [ allspice, 1/2 tsp]
+    - [ cayenne, 1 tsp]
+  steps:
+    - combine in small bowl
+- name: initial cooking
+  ingredients:
+    - [ olive oil, 1/4 cup]
+    - [ minced garlic cloves, 2]
+    - [ salt, 2 1/4 tsp]
+    - [ long grain rice, 3/4 cups]
+    - [ water, 4 1/4 cups]
+    - [ bay leaf] # note no units and no values
+    - [ cinnamon stick]
+  steps:
+    - Heat oil in a Dutch oven or large pot over medium-high heat. Add leeks and cook, stirring occasionally, until golden brown and crispy, 5 to 10 minutes. Transfer half the leeks to a bowl to use for garnish and sprinkle with 1/4 teaspoon salt.
+    - Stir garlic into the pot with the remaining leeks and cook for 15 seconds until fragrant. Stir in rice and sauté 2 minutes. Stir in combined spcies; sauté 30 seconds.
+    - Drain lentils and stir into pot. Add water, 2 teaspoons salt, bay leaf and cinnamon stick. Bring to a simmer. Cover and cook over low heat for 15 minutes
+- name: final cooking
+  ingredients:
+    - [ trimmed and chopped spring greens, 4 cups]
+  steps:
+    - Rinse greens in a colander and spread damp leaves over lentil mixture. Cover and cook 5 minutes more, until rice and lentils are tender and greens are wilted. Remove from heat and let stand, covered, for 5 minutes. Serve sprinkled with reserved crispy leeks
+    
+
+    
